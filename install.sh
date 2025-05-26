@@ -66,7 +66,7 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
   mkdir -p $ROOTFS_DIR/usr/local/bin
   download_file "$PROOT_URL" "$ROOTFS_DIR/usr/local/bin/proot"
 
-  # 确保proot下载成功
+  # 确保proot下载成功并设置权限
   while [ ! -s "$ROOTFS_DIR/usr/local/bin/proot" ]; do
     echo "proot下载失败，正在重试..."
     rm -f $ROOTFS_DIR/usr/local/bin/proot
@@ -191,4 +191,7 @@ $ROOTFS_DIR/usr/local/bin/proot \
     
     # 显示系统信息
     neofetch
+    
+    # 启动bash
+    exec /bin/bash
   '
