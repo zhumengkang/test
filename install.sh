@@ -21,7 +21,7 @@ print_green() { printf "\033[0;32m%s\033[0m\n" "$1"; }
 print_yellow() { printf "\033[1;33m%s\033[0m\n" "$1"; }
 print_blue() { printf "\033[0;34m%s\033[0m\n" "$1"; }
 print_cyan() { printf "\033[0;36m%s\033[0m\n" "$1"; }
-print_white() { printf "\033[1;37m%s\033[0m\n" "$1"; }
+print_purple() { printf "\033[0;35m%s\033[0m\n" "$1"; }
 
 # 检测系统架构
 print_blue "检测系统架构..."
@@ -40,13 +40,13 @@ fi
 
 # 安装确认
 if [ ! -e "$ROOTFS_DIR/.installed" ]; then
-    print_white "#######################################################################################"
-    print_white "#"
-    print_white "#                           Ubuntu 环境一键安装器"
-    print_white "#"
-    print_white "#                          免root权限 - 基于proot技术"
-    print_white "#"
-    print_white "#######################################################################################"
+    print_purple "#######################################################################################"
+    print_purple "#"
+    print_purple "#                           Ubuntu 环境一键安装器"
+    print_purple "#"
+    print_purple "#                          免root权限 - 基于proot技术"
+    print_purple "#"
+    print_purple "#######################################################################################"
     printf "\n"
     
     printf "是否要安装Ubuntu环境？(YES/no): "
@@ -93,28 +93,51 @@ if [ ! -e "$ROOTFS_DIR/.installed" ]; then
     print_blue "下载proot工具..."
     mkdir -p "$ROOTFS_DIR/usr/local/bin"
     
-    # 尝试多个proot源
-    proot_urls=(
-        "https://raw.githubusercontent.com/zhumengkang/test/main/proot-${PROOT_ARCH}"
-        "https://raw.githubusercontent.com/foxytouxxx/freeroot/main/proot-${PROOT_ARCH}"
-        "https://github.com/proot-me/proot/releases/latest/download/proot-${PROOT_ARCH}"
-    )
-    
+    # 尝试多个proot源 - 使用sh兼容的循环
     proot_downloaded=0
-    for url in "${proot_urls[@]}"; do
-        print_yellow "尝试从: $url"
-        wget --tries=$max_retries --timeout=$timeout --no-hsts -O "$ROOTFS_DIR/usr/local/bin/proot" "$url"
+    
+    # 第一个源
+    print_yellow "尝试从主源下载proot..."
+    wget --tries=$max_retries --timeout=$timeout --no-hsts -O "$ROOTFS_DIR/usr/local/bin/proot" "https://raw.githubusercontent.com/zhumengkang/test/main/proot-${PROOT_ARCH}"
+    
+    if [ -s "$ROOTFS_DIR/usr/local/bin/proot" ]; then
+        chmod 755 "$ROOTFS_DIR/usr/local/bin/proot"
+        proot_downloaded=1
+        print_green "✓ proot下载成功"
+    else
+        rm -f "$ROOTFS_DIR/usr/local/bin/proot"
+        print_yellow "⚠ 主源下载失败，尝试备用源..."
+        
+        # 第二个源
+        wget --tries=$max_retries --timeout=$timeout --no-hsts -O "$ROOTFS_DIR/usr/local/bin/proot" "https://raw.githubusercontent.com/foxytouxxx/freeroot/main/proot-${PROOT_ARCH}"
         
         if [ -s "$ROOTFS_DIR/usr/local/bin/proot" ]; then
             chmod 755 "$ROOTFS_DIR/usr/local/bin/proot"
             proot_downloaded=1
-            print_green "✓ proot下载成功"
-            break
+            print_green "✓ proot从备用源下载成功"
         else
             rm -f "$ROOTFS_DIR/usr/local/bin/proot"
-            print_yellow "⚠ 当前源下载失败，尝试下一个源..."
+            print_yellow "⚠ 备用源也失败，尝试第三个源..."
+            
+            # 第三个源 - 使用循环重试
+            retry_count=0
+            while [ $retry_count -lt 3 ] && [ $proot_downloaded -eq 0 ]; do
+                wget --tries=$max_retries --timeout=$timeout --no-hsts -O "$ROOTFS_DIR/usr/local/bin/proot" "https://github.com/proot-me/proot/releases/latest/download/proot-${PROOT_ARCH}"
+                
+                if [ -s "$ROOTFS_DIR/usr/local/bin/proot" ]; then
+                    chmod 755 "$ROOTFS_DIR/usr/local/bin/proot"
+                    proot_downloaded=1
+                    print_green "✓ proot从GitHub releases下载成功"
+                    break
+                else
+                    rm -f "$ROOTFS_DIR/usr/local/bin/proot"
+                    retry_count=$((retry_count + 1))
+                    print_yellow "⚠ GitHub源重试 $retry_count/3..."
+                    sleep 1
+                fi
+            done
         fi
-    done
+    fi
     
     if [ $proot_downloaded -eq 0 ]; then
         print_red "✗ 所有proot源都下载失败"
@@ -307,24 +330,24 @@ EOF
 chmod +x "setup-ubuntu.sh"
 
 # 显示完成信息
-print_white "═══════════════════════════════════════════════════════════════"
+print_purple "═══════════════════════════════════════════════════════════════"
 print_green "                        安装完成！"
-print_white "═══════════════════════════════════════════════════════════════"
+print_purple "═══════════════════════════════════════════════════════════════"
 printf "\n"
 print_cyan "📋 使用步骤:"
-print_white "1. 首次配置环境（安装软件包）:"
-print_green "   ./setup-ubuntu.sh"
+print_green "1. 首次配置环境（安装软件包）:"
+print_yellow "   ./setup-ubuntu.sh"
 printf "\n"
-print_white "2. 启动Ubuntu环境:"
-print_green "   ./start-ubuntu.sh"
+print_green "2. 启动Ubuntu环境:"
+print_yellow "   ./start-ubuntu.sh"
 printf "\n"
-print_white "3. 退出Ubuntu环境:"
-print_green "   exit 或按 Ctrl+D"
+print_green "3. 退出Ubuntu环境:"
+print_yellow "   exit 或按 Ctrl+D"
 printf "\n"
 print_cyan "💡 提示:"
-print_white "• 首次使用前请先运行 ./setup-ubuntu.sh"
-print_white "• 环境是持久化的，文件修改会保存"
-print_white "• 支持完整的Ubuntu命令和工具"
+print_green "• 首次使用前请先运行 ./setup-ubuntu.sh"
+print_green "• 环境是持久化的，文件修改会保存"
+print_green "• 支持完整的Ubuntu命令和工具"
 printf "\n"
 
 # 询问是否立即配置
