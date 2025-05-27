@@ -50,7 +50,7 @@ if [ ! -e $ROOTFS_DIR/.installed ]; then
     [yY][eE][sS]|"")
       echo "开始下载Ubuntu 24.04基础系统..."
       wget --tries=$max_retries --timeout=$timeout --no-hsts -O /tmp/rootfs.tar.gz \
-        "http://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04.1-base-${ARCH_ALT}.tar.gz"
+        "http://cdimage.ubuntu.com/ubuntu-base/releases/24.04/release/ubuntu-base-24.04-base-${ARCH_ALT}.tar.gz"
       
       if [ -s /tmp/rootfs.tar.gz ]; then
         echo "解压Ubuntu基础系统..."
